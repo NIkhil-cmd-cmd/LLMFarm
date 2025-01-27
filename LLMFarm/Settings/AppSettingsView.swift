@@ -23,7 +23,7 @@ struct AppSettingsView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    Text("Explore a variety of on-device language models. Download and try different models to find the perfect fit for your needs - from small and fast to more capable ones.")
+                    Text("Explore a variety of on-device language models. Download and try different models to find the perfect fit for your needs.")
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.8))
                         .padding(.bottom, 10)
