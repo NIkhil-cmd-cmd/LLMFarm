@@ -1,5 +1,5 @@
 //
-//  SettingsView.swift
+//  AppSettingsView.swift
 //  LLMFarm
 //
 //  Created by guinmoon on 01.11.2023.
@@ -7,65 +7,65 @@
 
 import SwiftUI
 
-
-struct SettingsView: View {
+struct AppSettingsView: View {
     @EnvironmentObject var fineTuneModel: FineTuneModel
-    @Binding var current_detail_view_name:String?
-    @State var settings_menu_items = [
-        ["icon":"square.stack.3d.up.fill","value":"Models","name":"Models"],
-        //        ["icon":"square.stack.3d.up.fill","value":"LoRA","name":"LoRA Adepters"],
-        //        ["icon":"square.stack.3d.up.fill","value":"Settings","name":"App Settings"]
-    ]
-    @State var tabIndex = 0
+    @Binding var current_detail_view_name: String?
     
     var body: some View {
-        HStack(spacing: 0){
-            
-            AppSettingTabs(index:$tabIndex)
-            
-            GeometryReader{_ in
-                VStack{
+        VStack(spacing: 0) {
+            ZStack {
+                DarkGradientBackground()
+                    .edgesIgnoringSafeArea(.top)
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Models")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
                     
-                        HStack{
-                            Text("Settings")
-                                .fontWeight(.semibold)
-                                .font(.title2)
-                        }
-                        //                            .padding(.top)
-                        //                            .padding(.horizontal)
-                        .padding([.leading,.trailing],2)
-                    
-                    // changing tabs based on tabs...
-                    switch tabIndex{
-                    case 0:
-                        ModelsView("models")
-                        
-                    case 1:
-                        DownloadModelsView()
-                    case 2:
-                        About()
-                        
-                    default:
-                        
-                        ModelsView("models")
-                        
-                    }
-                    
-                    
+                    Text("Explore a variety of on-device language models. Download and try different models to find the perfect fit for your needs - from small and fast to more capable ones.")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.bottom, 10)
                 }
-#if os(macOS)
-                .padding(.top, topSafeAreaInset())
-                .padding(.bottom, bottomSafeAreaInset())
-#else
-                .padding(.top, UIApplication.shared.keyWindow?.safeAreaInsets.top)
-                .padding(.bottom, UIApplication.shared.keyWindow?.safeAreaInsets.bottom)
-#endif
-                .padding([.leading,.trailing],1)
-                // due to all edges are ignored...
+                .padding()
             }
+            .frame(height: 150)
             
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Current Models Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Current Models")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 5)
+                        
+                        ModelsView("models")
+                    }
+                    .padding(.horizontal)
+                    
+                    // Download Models Section  
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Download Models")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        DownloadModelsView()
+                    }
+                    .padding(.horizontal)
+                }
+                
+                Spacer()
+            }
         }
-        .edgesIgnoringSafeArea(.all)
-        
+        .background(Color(.systemBackground))
+    }
+}
+
+struct AppSettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        AppSettingsView(current_detail_view_name: .constant(nil))
+            .environmentObject(FineTuneModel())
     }
 }

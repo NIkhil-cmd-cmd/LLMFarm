@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-
-
 struct ChatListView: View {
     @EnvironmentObject var fineTuneModel: FineTuneModel
     @EnvironmentObject var aiChatModel: AIChatModel
@@ -20,7 +18,6 @@ struct ChatListView: View {
     @Binding var add_chat_dialog: Bool
     var close_chat: () -> Void
     @Binding var edit_chat_dialog: Bool
-    //    @Binding var chat_selection: String?
     @Binding var chat_selection: Dictionary<String, String>?
     @Binding var after_chat_edit: () -> Void 
     @State var chats_previews:[Dictionary<String, String>] = []
@@ -54,157 +51,189 @@ struct ChatListView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 5){
-            VStack(){
-                List(selection: $chat_selection){
-                    ForEach(chats_previews, id: \.self) { chat_preview in
-                        NavigationLink(value: chat_preview){
-                            ChatItem(
-                                chatImage: String(describing: chat_preview["icon"]!),
-                                chatTitle: String(describing: chat_preview["title"]!),
-                                message: String(describing: chat_preview["message"]!),
-                                time: String(describing: chat_preview["time"]!),
-                                model:String(describing: chat_preview["model"]!),
-                                chat:String(describing: chat_preview["chat"]!),
-                                //                                chat_selection: $chat_selection,
-                                model_size:String(describing: chat_preview["model_size"]!),
-                                model_name: $model_name,
-                                title: $title,
-                                close_chat:close_chat
-                            )
-//                                                        .border(Color.green, width: 1)
-                            .listRowInsets(.init())
-                            .contextMenu {
-                                Button(action: {
-                                    Duplicate(at: chat_preview)
-                                }){
-                                    Text("Duplicate chat")
+        ZStack {
+            DarkGradientBackground()
+            
+            VStack(alignment: .leading, spacing: 5){
+                
+                Text("Welcome to the other side of language models: SLM (small language models). Generate random outputs and messages, try out different on-device models with RAG, chat with a variety of different models.")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.horizontal)
+                    .padding(.bottom, 10)
+                
+                VStack(){
+                    List(selection: $chat_selection){
+                        ForEach(chats_previews, id: \.self) { chat_preview in
+                            NavigationLink(value: chat_preview){
+                                ChatItem(
+                                    chatImage: String(describing: chat_preview["icon"]!),
+                                    chatTitle: String(describing: chat_preview["title"]!),
+                                    message: String(describing: chat_preview["message"]!),
+                                    time: String(describing: chat_preview["time"]!),
+                                    model:String(describing: chat_preview["model"]!),
+                                    chat:String(describing: chat_preview["chat"]!),
+                                    model_size:String(describing: chat_preview["model_size"]!),
+                                    model_name: $model_name,
+                                    title: $title,
+                                    close_chat:close_chat
+                                )
+                                .listRowInsets(.init())
+                                .contextMenu {
+                                    Button(action: {
+                                        Duplicate(at: chat_preview)
+                                    }){
+                                        Text("Duplicate chat")
+                                    }
+                                    Button(action: {
+                                        Delete(at: chat_preview)
+                                    }){
+                                        Text("Remove chat")
+                                    }
                                 }
-                                Button(action: {
-                                    Delete(at: chat_preview)
-                                }){
-                                    Text("Remove chat")
-                                }
-                                
                             }
                         }
+                        .onDelete(perform: Delete)
                     }
-                    .onDelete(perform: Delete)
-                }
-                
-                .frame(maxHeight: .infinity)
-                //                    .border(Color.red, width: 1)
-                //                    .listStyle(PlainListStyle())
+                    .frame(maxHeight: .infinity)
 #if os(macOS)
-                .listStyle(.sidebar)
+                    .listStyle(.sidebar)
 #else
-                .listStyle(InsetListStyle())
+                    .listStyle(InsetListStyle())
+#endif
+                }
+                .background(.opacity(0))
+                
+                if chats_previews.count<=0{
+                    VStack{
+                        Button {
+                            Task {
+                                toggleAddChat = true
+                                add_chat_dialog = true
+                                edit_chat_dialog = false
+                            }
+                        } label: {
+                            Image(systemName: "plus.square.dashed")
+                                .foregroundColor(.secondary)
+                                .font(.system(size: 40))
+                        }
+                        .buttonStyle(.borderless)
+                        .controlSize(.large)
+                        Text("Start new chat")
+                            .font(.title3)
+                            .frame(maxWidth: .infinity)
+                        
+                    }.opacity(0.4)
+                        .frame(maxWidth: .infinity,alignment: .center)
+                }
+            }.task {
+                after_chat_edit = refresh_chat_list
+                refresh_chat_list()
+            }
+            .navigationTitle("Solo Chat")
+            .sheet(isPresented: $toggleSettings) {
+                AppSettingsView(current_detail_view_name:$current_detail_view_name).environmentObject(fineTuneModel)
+#if os(macOS)
+                    .frame(minWidth: 400,minHeight: 600)
 #endif
             }
-//            .border(/*@START_MENU_TOKEN@*/Color.black/*@END_MENU_TOKEN@*/)
-            .background(.opacity(0))
+            .sheet(isPresented: $toggleAddChat) {
+                if edit_chat_dialog{
+                    ChatSettingsView(add_chat_dialog: $toggleAddChat,
+                                edit_chat_dialog: $edit_chat_dialog,
+                                chat_name: aiChatModel.chat_name,
+                                after_chat_edit: $after_chat_edit,
+                                toggleSettings: $toggleSettings).environmentObject(aiChatModel)
+#if os(macOS)
+                        .frame(minWidth: 400,minHeight: 600)
+#endif
+                }else{
+                    ChatSettingsView(add_chat_dialog: $toggleAddChat,
+                                edit_chat_dialog: $edit_chat_dialog,
+                                after_chat_edit: $after_chat_edit,
+                                toggleSettings: $toggleSettings).environmentObject(aiChatModel)
+#if os(macOS)
+                        .frame(minWidth: 400,minHeight: 600)
+#endif
+                }
+            }
             
-            if chats_previews.count<=0{
-                VStack{
+            // Floating Action Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
                     Button {
                         Task {
-                            toggleAddChat = true
                             add_chat_dialog = true
                             edit_chat_dialog = false
+                            toggleAddChat = true
                         }
                     } label: {
-                        Image(systemName: "plus.square.dashed")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 40))
+                        Image(systemName: "bubble.and.pencil.rtl")
+                            .font(.title3.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [.purple.opacity(0.8), .purple.opacity(0.4)]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .clipShape(Circle())
+                            .shadow(radius: 3)
                     }
-                    .buttonStyle(.borderless)
-                    .controlSize(.large)
-                    Text("Start new chat")
-                        .font(.title3)
-                        .frame(maxWidth: .infinity)
-                    
-                    
-                }.opacity(0.4)
-                    .frame(maxWidth: .infinity,alignment: .center)
-            }
-        }.task {
-            after_chat_edit = refresh_chat_list
-            refresh_chat_list()
-        }
-        .navigationTitle("Chats")
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Menu {
-                    Button {
-                        toggleSettings = true
-                    } label: {
-                        HStack {
-                            Text("Settings")
-                            Image(systemName: "gear")
-                        }
-                    }
-#if os(iOS)
-                    EditButton()
-#endif
-                } label: {
-                    Image(systemName: "ellipsis.circle")
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
                 }
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    Task {
-                        add_chat_dialog = true
-                        edit_chat_dialog = false
-                        toggleAddChat = true
-                    }
-                } label: {
-                    Image(systemName: "plus")
-                }
-                
-            }
         }
-        .sheet(isPresented: $toggleSettings) {
-            SettingsView(current_detail_view_name:$current_detail_view_name).environmentObject(fineTuneModel)
-#if os(macOS)
-                .frame(minWidth: 400,minHeight: 600)
-#endif
-        }
-        .sheet(isPresented: $toggleAddChat) {
-            if edit_chat_dialog{
-                ChatSettingsView(add_chat_dialog: $toggleAddChat,
-                            edit_chat_dialog: $edit_chat_dialog,
-                            chat_name: aiChatModel.chat_name,
-                            after_chat_edit: $after_chat_edit,
-                            toggleSettings: $toggleSettings).environmentObject(aiChatModel)
-#if os(macOS)
-                    .frame(minWidth: 400,minHeight: 600)
-#endif
-            }else{
-                ChatSettingsView(add_chat_dialog: $toggleAddChat,
-                            edit_chat_dialog: $edit_chat_dialog,
-                            after_chat_edit: $after_chat_edit,
-                            toggleSettings: $toggleSettings).environmentObject(aiChatModel)
-#if os(macOS)
-                    .frame(minWidth: 400,minHeight: 600)
-#endif
-            }
+    }
+}
+
+struct RadialGradientBackground: View {
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
             
+            // Increased opacity for blue gradient
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color.blue.opacity(0.5),
+                    Color.clear
+                ]),
+                center: .topLeading,
+                startRadius: 0,  // Reduced start radius
+                endRadius: 600   // Increased end radius
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            // Increased opacity for green gradient
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color.purple.opacity(0.4),
+                    Color.clear
+                ]),
+                center: .topTrailing,
+                startRadius: 0,  // Reduced start radius
+                endRadius: 600   // Increased end radius
+            )
+            .edgesIgnoringSafeArea(.all)
+            
+            // Increased opacity for purple gradient
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color.purple.opacity(0.4),
+                    Color.clear
+                ]),
+                center: .bottomTrailing,
+                startRadius: 0,  // Reduced start radius
+                endRadius: 500   // Increased end radius
+            )
+            .edgesIgnoringSafeArea(.all)
         }
     }
 }
 
 
-
-//struct ChatListView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ChatListView(tabSelection: .constant(1),
-//                     chat_selected: .constant(false),
-//                     model_name: .constant(""),
-//                     chat_name: .constant(""),
-//                     title: .constant(""),
-//                     add_chat_dialog: .constant(false),
-//                     close_chat:{},
-//                     edit_chat_dialog:.constant(false))
-////            .preferredColorScheme(.dark)
-//    }
-//}

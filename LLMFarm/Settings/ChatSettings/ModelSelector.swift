@@ -17,7 +17,7 @@ struct ModelSelector: View {
     @State private var isModelImporting: Bool = false
   
     var body: some View {
-        HStack {
+        VStack(alignment: .leading, spacing: 10) {
             Menu {
                 Button {
                     Task {
@@ -27,7 +27,7 @@ struct ModelSelector: View {
                     Label(import_lable, systemImage: "plus.app")
                 }
                 
-                if !edit_chat_dialog{
+                if !edit_chat_dialog {
                     Button {
                         Task {
                             toggleSettings = true
@@ -35,22 +35,28 @@ struct ModelSelector: View {
                     } label: {
                         Label(download_lable, systemImage: "icloud.and.arrow.down")
                     }
-                    
                 }
                     
                 Divider()
                 
-                Section(avalible_lable) {
+                Section(header: Text(avalible_lable)) {
                     ForEach(models_previews, id: \.self) { model in
-                        Button(model["file_name"]!){
-//                                            model_file_name = model["file_name"]!
-                            model_file_path = model["file_name"]!
-                            model_title = GetFileNameWithoutExt(fileName:model_file_path)
+                        Button(model["file_name"] ?? "") {
+                            model_file_path = model["file_name"] ?? ""
+                            model_title = GetFileNameWithoutExt(fileName: model_file_path)
                         }
                     }
                 }
             } label: {
-                Label(model_file_path == "" ?selection_lable:model_file_path, systemImage: "ellipsis.circle")
+                HStack {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundColor(.purple)
+                    Text(model_file_path.isEmpty ? selection_lable : model_file_path)
+                        .foregroundColor(.primary)
+                }
+                .padding()
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .cornerRadius(10)
             }
         }
         .fileImporter(
@@ -60,22 +66,36 @@ struct ModelSelector: View {
         ) { result in
             do {
                 guard let selectedFile: URL = try result.get().first else { return }
-                //                                model_file.input = selectedFile.lastPathComponent
-//                                model_file_name = selectedFile.lastPathComponent
                 model_file_url = selectedFile
-                //                                    saveBookmark(url: selectedFile)
-                //#if os(iOS) || os(watchOS) || os(tvOS)
                 model_file_path = selectedFile.lastPathComponent
-                //#else
-                //                                    model_file_path = selectedFile.path
-                //#endif
-                model_title = GetFileNameWithoutExt(fileName:selectedFile.lastPathComponent)
+                model_title = GetFileNameWithoutExt(fileName: selectedFile.lastPathComponent)
             } catch {
                 // Handle failure.
                 print("Unable to read file contents")
                 print(error.localizedDescription)
             }
         }
+    }
+}
+
+struct ModelSelector_Previews: PreviewProvider {
+    static var previews: some View {
+        ModelSelector(
+            models_previews: .constant([
+                ["file_name": "model1.bin"],
+                ["file_name": "model2.bin"]
+            ]),
+            model_file_path: .constant(""),
+            model_file_url: .constant(URL(string: "https://example.com/model1.bin")!),
+            model_title: .constant(""),
+            toggleSettings: .constant(false),
+            edit_chat_dialog: .constant(false),
+            import_lable: "Import from File...",
+            download_lable: "Download Models...",
+            selection_lable: "Select Model...",
+            avalible_lable: "Available Models"
+        )
+        .previewLayout(.sizeThatFits)
     }
 }
 

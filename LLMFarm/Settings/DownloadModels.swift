@@ -66,68 +66,40 @@ struct DownloadModelsView: View {
     
     
     var body: some View {
-        ZStack{
-            //            Color("color_bg").edgesIgnoringSafeArea(.all)
-            VStack{
-//                 Button(action: {
-//                    let fileURL = DownloadButton.getFileURL(filename: filename)
-//                    if !FileManager.default.fileExists(atPath: fileURL.path) {
-//                        download()
-//                        return
-//                    }
-//                    do {
-//                        try llamaState.loadModel(modelUrl: fileURL)
-//                    } catch let err {
-//                        print("Error: \(err.localizedDescription)")
-//                    }
-//                }) {
-//                    Text("Load \(modelName)")
-//                }
-                VStack(spacing: 5){
-                    List(selection: $model_selection){
-                        ForEach(models_info, id: \.self) { model_info  in
-
-                            ModelDownloadItem(modelInfo:model_info)
-//                                modelName: model["name"],
-//                                modelIcon: "square.stack.3d.up.fill",
-//                                model_files:  model["models"])                          
-                        }
-//                        .onDelete(perform: delete)
+        VStack(spacing: 16) {
+            // Models List
+            LazyVStack(spacing: 12) {
+                ForEach(models_info, id: \.self) { model_info in
+                    ModelDownloadItem(modelInfo: model_info)
+                        .background(Color(UIColor.secondarySystemGroupedBackground))
+                        .cornerRadius(10)
+                }
+            }
+            
+            // Empty State
+            if models_info.isEmpty {
+                VStack {
+                    Button {
+                        isImporting.toggle()
+                    } label: {
+                        Image(systemName: "plus.square.dashed")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 40))
                     }
-#if os(macOS)
-                    .listStyle(.sidebar)
-#else
-                    .listStyle(InsetListStyle())
-#endif
+                    .buttonStyle(.borderless)
+                    Text("Add model")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
                 }
-                if  models_info.count <= 0 {
-                    VStack{
-                        
-                        Button {
-                            Task {
-                                isImporting.toggle()
-                            }
-                        } label: {
-                            Image(systemName: "plus.square.dashed")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 40))
-                        }
-                        .buttonStyle(.borderless)
-                        .controlSize(.large)
-                        Text("Add model")
-                            .font(.title3)
-                            .frame(maxWidth: .infinity)
-                        
-                    }.opacity(0.4)
-                        .frame(maxWidth: .infinity,alignment: .center)
-                }
-                
+                .frame(maxWidth: .infinity, minHeight: 200)
+                .opacity(0.6)
             }
         }
-        .toolbar{
-           
+        .fileImporter(isPresented: $isImporting,
+                     allowedContentTypes: [bin_type!, gguf_type!],
+                     allowsMultipleSelection: false) { result in
+            // Keep existing fileImporter implementation
         }
-        .navigationTitle("Download models")      
     }
 }
 

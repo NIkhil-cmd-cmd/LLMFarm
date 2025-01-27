@@ -15,50 +15,50 @@ struct ModelInfoItem: View {
     var description: String = ""
     var download_url: String = ""
     
-    func model_name_canged(){
-        let res = rename_file(orig_file_name,file_name,"models")
+    func model_name_changed(){
+        let res = rename_file(orig_file_name, file_name, "models")
         if res {
             orig_file_name = file_name
-        }else{
+        } else {
             print("Rename error!")
         }
     }
     
     var body: some View {
-        HStack{
+        HStack(alignment: .top, spacing: 15) {
             Image(systemName: modelIcon)
                 .resizable()
-            //                .background( Color("color_bg_inverted").opacity(0.05))
-                .padding(EdgeInsets(top: 7, leading: 5, bottom: 7, trailing: 5))
+                .scaledToFit()
                 .frame(width: 40, height: 40)
+                .padding()
+                .background(Color("color_bg_inverted").opacity(0.1))
                 .clipShape(Circle())
-            VStack(alignment: .leading, spacing: 6){
-                HStack
-                {
-                    Text(file_name)
-//                        .frame( maxWidth: .infinity)
-                        .frame( alignment: .leading)
-//#if os(macOS)
-//                    DidEndEditingTextField(text: $file_name, didEndEditing: { newName in
-//                        model_name_canged()
-//                    })
-//#else
-//                    TextField("", text: $file_name)
-//                        .onSubmit {
-//                            model_name_canged()
-//                        }
-
-                }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(file_name)
+                    .font(.headline)
+                    .foregroundColor(.primary)
                 
-                HStack{
-                    Text(description)
-                        .lineLimit(/*@START_MENU_TOKEN@*/2/*@END_MENU_TOKEN@*/)
-                    
-                }                
-                
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
             }
-            .padding(.horizontal, 10)
-
+            
+            Spacer()
         }
+        .padding(.vertical, 10)
+    }
+}
+
+struct ModelInfoItem_Previews: PreviewProvider {
+    static var previews: some View {
+        ModelInfoItem(
+            modelIcon: "square.2.layers.3d",
+            file_name: "model1.bin",
+            orig_file_name: "model1.bin",
+            description: "This is a description for model1."
+        )
+        .previewLayout(.sizeThatFits)
     }
 }
